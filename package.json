@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "fetch:moves": "bun run ./scripts/fetch-moves.ts",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
@@ -12,6 +13,7 @@
     "lit": "^3.3.0"
   },
   "devDependencies": {
+    "@types/bun": "^1.2.13",
     "typescript": "~5.8.3",
     "vite": "^6.3.5"
   }

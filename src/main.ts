@@ -5,15 +5,16 @@ import { customElement } from "lit/decorators.js";
 export class MainApp extends LitElement {
   render() {
     return html`
-      <div>
-        Turn anything into a pokemon
+      <main>
+        <div>Turn anything into a pokemon</div>
 
         <textarea
           placeholder="Short description of the pokemon"
           id="input"
         ></textarea>
+
         <button>Generate</button>
-      </div>
+      </main>
     `;
   }
 }
