@@ -13,21 +13,21 @@ interface ApiResponse {
   results: ResultItem[];
 }
 
-export async function fetchMoves() {
+export async function fetchNatures() {
   const url =
-    "https://raw.githubusercontent.com/PokeAPI/api-data/refs/heads/master/data/api/v2/move/index.json";
+    "https://raw.githubusercontent.com/PokeAPI/api-data/refs/heads/master/data/api/v2/nature/index.json";
 
   const response = await fetch(url);
-  const moves = (await response.json()) as ApiResponse;
+  const natures = (await response.json()) as ApiResponse;
 
   const movesFile = path.join(
     import.meta.dirname,
     "..",
     "public",
     "data",
-    "moves.txt"
+    "natures.txt"
   );
-  const fileContent = moves.results
+  const fileContent = natures.results
     .reduce((acc, move) => acc + `${move.name}\n`, "")
     .trim();
 

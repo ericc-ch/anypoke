@@ -13,21 +13,24 @@ interface ApiResponse {
   results: ResultItem[];
 }
 
-export async function fetchMoves() {
+const blacklistedStats = ["accuracy", "evasion"];
+
+export async function fetchStats() {
   const url =
-    "https://raw.githubusercontent.com/PokeAPI/api-data/refs/heads/master/data/api/v2/move/index.json";
+    "https://raw.githubusercontent.com/PokeAPI/api-data/refs/heads/master/data/api/v2/stat/index.json";
 
   const response = await fetch(url);
-  const moves = (await response.json()) as ApiResponse;
+  const stats = (await response.json()) as ApiResponse;
 
   const movesFile = path.join(
     import.meta.dirname,
     "..",
     "public",
     "data",
-    "moves.txt"
+    "stats.txt"
   );
-  const fileContent = moves.results
+  const fileContent = stats.results
+    .filter((type) => !blacklistedStats.includes(type.name))
     .reduce((acc, move) => acc + `${move.name}\n`, "")
     .trim();
 

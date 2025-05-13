@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "fetch:moves": "bun run ./scripts/fetch-moves.ts",
+    "fetch-data": "bun run ./scripts/fetch-all.ts",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"
