@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Generator - Gen 3 Style (Editable + Pokedex)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #D0D8E0; /* Light grayish-blue GBA screen-like background */
+        }
+        .pokemon-card {
+            background-color: #F8F8F8; /* Classic white textbox background */
+            border: 6px solid #003A6C; /* Dark blue, thick border like Gen 3 UI frames */
+            border-radius: 8px;
+            box-shadow: 4px 4px 0px #002038; /* Hard-edged shadow for retro feel */
+        }
+        .pokemon-title {
+            font-family: 'Press Start 2P', cursive;
+            color: #003A6C;
+            text-shadow: 2px 2px #A0A8B0;
+        }
+        .pokemon-display-bg {
+            background-color: #B0C0D0;
+            border: 2px solid #8090A0;
+            border-radius: 4px;
+            cursor: pointer; /* Indicate clickable for image upload */
+            position: relative;
+        }
+        .pokemon-display-bg input[type="file"] {
+            display: none; /* Hide the actual file input */
+        }
+        .stat-bar-background {
+            background-color: #C0C0C0;
+            border-radius: 2px;
+            height: 10px; /* Made stat bars slightly thinner for slider combo */
+            border: 1px solid #A0A0A0;
+            margin-top: 4px;
+        }
+        .stat-bar-fill {
+            border-radius: 1px;
+            height: 100%;
+            transition: width 0.3s ease-in-out; /* Smoother transition for bars */
+        }
+        .stat-hp { background-color: #FF5050; border: 1px solid #C00000;}
+        .stat-atk { background-color: #F8A050; border: 1px solid #C07000;}
+        .stat-def { background-color: #F8D050; border: 1px solid #C0A000;}
+        .stat-spa { background-color: #6890F0; border: 1px solid #3060C0;}
+        .stat-spd { background-color: #78C850; border: 1px solid #409020;}
+        .stat-spe { background-color: #F878F8; border: 1px solid #C040C0;}
+
+        .type-badge {
+            padding: 3px 10px; border-radius: 4px; font-size: 0.8rem;
+            font-weight: normal; font-family: 'Press Start 2P', cursive;
+            text-transform: uppercase; color: white; border: 1px solid rgba(0,0,0,0.2);
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
+        }
+        .type-none { background-color: #68A090; color: white; } /* For 'None' type option */
+        .type-normal { background-color: #A8A878; } .type-fire { background-color: #F08030; }
+        .type-water { background-color: #6890F0; } .type-grass { background-color: #78C850; }
+        .type-electric { background-color: #F8D030; } .type-ice { background-color: #98D8D8; }
+        .type-fighting { background-color: #C03028; } .type-poison { background-color: #A040A0; }
+        .type-ground { background-color: #E0C068; } .type-flying { background-color: #A890F0; }
+        .type-psychic { background-color: #F85888; } .type-bug { background-color: #A8B820; }
+        .type-rock { background-color: #B8A038; } .type-ghost { background-color: #705898; }
+        .type-dragon { background-color: #7038F8; } .type-steel { background-color: #B8B8D0; }
+        .type-dark { background-color: #705848; } .type-fairy { background-color: #EE99AC; }
+
+
+        .btn {
+            font-family: 'Press Start 2P', cursive; padding: 10px 18px; border-radius: 4px;
+            text-transform: uppercase; font-size: 0.8rem;
+            transition: background-color 0.1s ease-in-out;
+            border: 2px solid #002038; box-shadow: 2px 2px 0px #002038; cursor: pointer;
+        }
+        .btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0px #002038; }
+        .btn-generate { background-color: #F8D030; color: #002038; }
+        .btn-generate:hover { background-color: #E8C020; }
+        .btn-copy { background-color: #6890F0; color: white; }
+        .btn-copy:hover { background-color: #5078D0; }
+
+        .showdown-export {
+            font-family: 'monospace'; background-color: #202020; color: #E0E0E0;
+            border: 2px solid #000000; border-radius: 4px; padding: 8px;
+            min-height: 100px; /* Ensure enough space */
+        }
+        .text-primary { color: #202020; }
+        .text-secondary { color: #505050; }
+        .section-title {
+            font-family: 'Press Start 2P', cursive; color: #003A6C;
+            font-size: 1.1rem; margin-bottom: 0.75rem; /* Increased margin */
+            padding-bottom: 0.25rem; border-bottom: 2px solid #003A6C;
+        }
+
+        /* Input field styling */
+        .retro-input, .retro-select, .retro-textarea {
+            font-family: 'Inter', sans-serif; /* Using Inter for readability in inputs */
+            background-color: #E0E8F0; /* Light blue-gray, common in GBA UI inputs */
+            border: 2px solid #003A6C; /* Dark blue border */
+            border-radius: 2px; /* Very slight rounding */
+            padding: 6px 8px;
+            color: #002038; /* Dark text color */
+            width: 100%;
+            font-size: 0.9rem;
+            margin-top: 4px; /* Space above input */
+        }
+        .retro-input:focus, .retro-select:focus, .retro-textarea:focus {
+            outline: none;
+            border-color: #F8D030; /* Yellow focus, like selection */
+            box-shadow: 0 0 0 2px rgba(248, 208, 48, 0.5);
+        }
+        .retro-select {
+            appearance: none; /* Remove default arrow */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23003A6C'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem; /* Make space for custom arrow */
+        }
+
+        /* Slider styling */
+        .stat-slider-container {
+            display: grid;
+            grid-template-columns: auto 1fr auto; /* Label, Slider, Value */
+            align-items: center;
+            gap: 0.5rem; /* Reduced gap */
+            margin-bottom: 0.25rem; /* Reduced margin */
+        }
+        .stat-label {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.75rem;
+            color: #003A6C;
+        }
+        .stat-value {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.75rem;
+            color: #202020;
+            min-width: 30px; /* Ensure space for 3 digits */
+            text-align: right;
+        }
+        input[type="range"].retro-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #A0A8B0; /* Slider track color */
+            border-radius: 2px;
+            border: 1px solid #002038;
+            outline: none;
+            padding: 0;
+            margin: 0;
+        }
+        input[type="range"].retro-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #003A6C; /* Slider thumb color */
+            border-radius: 2px;
+            border: 1px solid #F8F8F8;
+            cursor: pointer;
+        }
+        input[type="range"].retro-slider::-moz-range-thumb {
+            width: 14px; /* Adjusted for Firefox */
+            height: 14px;
+            background: #003A6C;
+            border-radius: 2px;
+            border: 1px solid #F8F8F8;
+            cursor: pointer;
+        }
+
+
+        #copyNotification {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%); background-color: #003A6C;
+            color: white; padding: 10px 20px; border-radius: 4px;
+            border: 2px solid #F8F8F8; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100; opacity: 0;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            font-family: 'Press Start 2P', cursive; font-size: 0.8rem;
+        }
+        #copyNotification.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 selection:bg-yellow-300 selection:text-yellow-900">
+
+    <div class="w-full max-w-xl">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl pokemon-title">Pokémon Customizer</h1>
+        </header>
+
+        <main class="pokemon-card p-4 md:p-6 space-y-5">
+            <section id="pokemonDisplayInfo" class="grid md:grid-cols-2 gap-4 items-start">
+                <div class="pokemon-display-bg p-3 rounded-md flex justify-center items-center aspect-square">
+                    <label for="pokemonImageUpload" class="w-full h-full flex justify-center items-center cursor-pointer">
+                        <img id="pokemonImage" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png" alt="Pikachu" class="max-w-full h-auto max-h-[200px] object-contain">
+                    </label>
+                    <input type="file" id="pokemonImageUpload" accept="image/*">
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label for="pokemonNameInput" class="text-md font-semibold text-primary font-['Press_Start_2P']">Name:</label>
+                        <input type="text" id="pokemonNameInput" class="retro-input" value="Pikachu">
+                    </div>
+                    <div>
+                        <label for="pokedexNumberInput" class="text-md font-semibold text-primary font-['Press_Start_2P']">Pokédex #:</label>
+                        <input type="text" id="pokedexNumberInput" class="retro-input" value="#025">
+                    </div>
+
+                    <div>
+                        <label class="text-md font-semibold text-primary font-['Press_Start_2P']">Types:</label>
+                        <div class="grid grid-cols-2 gap-2 mt-1">
+                            <select id="pokemonType1Select" class="retro-select">
+                                </select>
+                            <select id="pokemonType2Select" class="retro-select">
+                                </select>
+                        </div>
+                         <div class="flex flex-wrap gap-2 mt-2">
+                            <span id="pokemonType1Badge" class="type-badge type-electric">Electric</span>
+                            <span id="pokemonType2Badge" class="type-badge type-none hidden">None</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="pokemonAbilityNameInput" class="text-md font-semibold text-primary font-['Press_Start_2P']">Ability:</label>
+                        <input type="text" id="pokemonAbilityNameInput" class="retro-input" value="Static">
+                    </div>
+                    <div>
+                        <label for="pokemonAbilityDescInput" class="text-md font-semibold text-primary font-['Press_Start_2P']">Ability Desc:</label>
+                        <textarea id="pokemonAbilityDescInput" class="retro-textarea" rows="2">When the Pokémon is hit by a move, any Pokémon making contact has a 30% chance of being paralyzed.</textarea>
+                    </div>
+                </div>
+            </section>
+
+            <section id="pokedexEntrySection">
+                <h3 class="section-title !mb-2">Pokédex Entry</h3>
+                <div>
+                    <textarea id="pokedexEntryInput" class="retro-textarea" rows="3" placeholder="Enter Pokédex lore here..."></textarea>
+                </div>
+            </section>
+
+            <section id="pokemonStats" class="space-y-1">
+                <h3 class="section-title">Base Stats</h3>
+                <div>
+                    <label for="totalBSTInput" class="stat-label !text-lg">Total BST:</label>
+                    <input type="number" id="totalBSTInput" class="retro-input w-auto inline-block ml-2" value="320" min="0" max="1530"> </div>
+
+                <div class="stat-slider-container">
+                    <span class="stat-label">HP</span>
+                    <input type="range" id="statHPSlider" class="retro-slider" min="1" max="255" value="35">
+                    <span id="statHPValue" class="stat-value">35</span>
+                </div>
+                <div class="stat-bar-background"><div id="statHPBar" class="stat-bar-fill stat-hp" style="width: 13.7%;"></div></div>
+
+                <div class="stat-slider-container">
+                    <span class="stat-label">Attack</span>
+                    <input type="range" id="statAtkSlider" class="retro-slider" min="1" max="255" value="55">
+                    <span id="statAtkValue" class="stat-value">55</span>
+                </div>
+                <div class="stat-bar-background"><div id="statAtkBar" class="stat-bar-fill stat-atk" style="width: 21.5%;"></div></div>
+
+                <div class="stat-slider-container">
+                    <span class="stat-label">Defense</span>
+                    <input type="range" id="statDefSlider" class="retro-slider" min="1" max="255" value="40">
+                    <span id="statDefValue" class="stat-value">40</span>
+                </div>
+                <div class="stat-bar-background"><div id="statDefBar" class="stat-bar-fill stat-def" style="width: 15.6%;"></div></div>
+
+                <div class="stat-slider-container">
+                    <span class="stat-label">Sp. Atk</span>
+                    <input type="range" id="statSpASlider" class="retro-slider" min="1" max="255" value="50">
+                    <span id="statSpAValue" class="stat-value">50</span>
+                </div>
+                <div class="stat-bar-background"><div id="statSpABar" class="stat-bar-fill stat-spa" style="width: 19.6%;"></div></div>
+
+                <div class="stat-slider-container">
+                    <span class="stat-label">Sp. Def</span>
+                    <input type="range" id="statSpDSlider" class="retro-slider" min="1" max="255" value="50">
+                    <span id="statSpDValue" class="stat-value">50</span>
+                </div>
+                <div class="stat-bar-background"><div id="statSpDBar" class="stat-bar-fill stat-spd" style="width: 19.6%;"></div></div>
+
+                <div class="stat-slider-container">
+                    <span class="stat-label">Speed</span>
+                    <input type="range" id="statSpeSlider" class="retro-slider" min="1" max="255" value="90">
+                    <span id="statSpeValue" class="stat-value">90</span>
+                </div>
+                <div class="stat-bar-background"><div id="statSpeBar" class="stat-bar-fill stat-spe" style="width: 35.2%;"></div></div>
+
+            </section>
+
+            <section class="text-center pt-3">
+                <button id="generateButton" class="btn btn-generate">
+                    Randomize Pokémon
+                </button>
+            </section>
+
+            <section class="space-y-2 pt-3">
+                <h3 class="section-title">Showdown Export</h3>
+                <textarea id="showdownExportText" class="w-full p-2 showdown-export focus:ring-1 focus:ring-yellow-400 focus:border-yellow-400 outline-none text-xs" readonly></textarea>
+                <button id="copyButton" class="btn btn-copy w-full md:w-auto">
+                    Copy Export
+                </button>
+            </section>
+        </main>
+
+        <footer class="text-center mt-6">
+            <p class="text-xs text-slate-600 font-['Press_Start_2P']">Pokémon Customizer UI v4</p>
+        </footer>
+    </div>
+
+    <div id="copyNotification">Copied!</div>
+
+    <script>
+        // DOM Elements
+        const pokemonImage = document.getElementById('pokemonImage');
+        const pokemonImageUpload = document.getElementById('pokemonImageUpload');
+        const pokemonNameInput = document.getElementById('pokemonNameInput');
+        const pokedexNumberInput = document.getElementById('pokedexNumberInput');
+        const pokemonType1Select = document.getElementById('pokemonType1Select');
+        const pokemonType2Select = document.getElementById('pokemonType2Select');
+        const pokemonType1Badge = document.getElementById('pokemonType1Badge');
+        const pokemonType2Badge = document.getElementById('pokemonType2Badge');
+        const pokemonAbilityNameInput = document.getElementById('pokemonAbilityNameInput');
+        const pokemonAbilityDescInput = document.getElementById('pokemonAbilityDescInput');
+        const pokedexEntryInput = document.getElementById('pokedexEntryInput'); // New element
+        const totalBSTInput = document.getElementById('totalBSTInput');
+
+        const statSliders = {
+            hp: document.getElementById('statHPSlider'),
+            atk: document.getElementById('statAtkSlider'),
+            def: document.getElementById('statDefSlider'),
+            spa: document.getElementById('statSpASlider'),
+            spd: document.getElementById('statSpDSlider'),
+            spe: document.getElementById('statSpeSlider'),
+        };
+        const statValues = {
+            hp: document.getElementById('statHPValue'),
+            atk: document.getElementById('statAtkValue'),
+            def: document.getElementById('statDefValue'),
+            spa: document.getElementById('statSpAValue'),
+            spd: document.getElementById('statSpDValue'),
+            spe: document.getElementById('statSpeValue'),
+        };
+        const statBars = {
+            hp: document.getElementById('statHPBar'),
+            atk: document.getElementById('statAtkBar'),
+            def: document.getElementById('statDefBar'),
+            spa: document.getElementById('statSpABar'),
+            spd: document.getElementById('statSpDBar'),
+            spe: document.getElementById('statSpeBar'),
+        };
+
+        const generateButton = document.getElementById('generateButton');
+        const copyButton = document.getElementById('copyButton');
+        const showdownExportText = document.getElementById('showdownExportText');
+        const copyNotification = document.getElementById('copyNotification');
+
+        const MAX_STAT_VALUE = 255; // Max for individual stats
+
+        const pokemonTypes = [
+            "None", "Normal", "Fire", "Water", "Grass", "Electric", "Ice", "Fighting",
+            "Poison", "Ground", "Flying", "Psychic", "Bug", "Rock", "Ghost",
+            "Dragon", "Steel", "Dark", "Fairy"
+        ];
+        const typeClasses = {
+            "None": "type-none", "Normal": "type-normal", "Fire": "type-fire", "Water": "type-water",
+            "Grass": "type-grass", "Electric": "type-electric", "Ice": "type-ice",
+            "Fighting": "type-fighting", "Poison": "type-poison", "Ground": "type-ground",
+            "Flying": "type-flying", "Psychic": "type-psychic", "Bug": "type-bug",
+            "Rock": "type-rock", "Ghost": "type-ghost", "Dragon": "type-dragon",
+            "Steel": "type-steel", "Dark": "type-dark", "Fairy": "type-fairy"
+        };
+
+        // Placeholder Pokémon data
+        const samplePokemon = [
+            {
+                name: "Pikachu", id: "#025",
+                sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png",
+                types: ["Electric", null],
+                ability: { name: "Static", description: "Contact with the Pokémon may cause paralysis." },
+                stats: { hp: 35, atk: 55, def: 40, spa: 50, spd: 50, spe: 90 },
+                pokedexEntry: "It occasionally uses an electric shock to recharge a fellow Pikachu that is in a weakened state."
+            },
+            {
+                name: "Bulbasaur", id: "#001",
+                sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/1.png",
+                types: ["Grass", "Poison"],
+                ability: { name: "Overgrow", description: "Powers up Grass-type moves when HP is low." },
+                stats: { hp: 45, atk: 49, def: 49, spa: 65, spd: 65, spe: 45 },
+                pokedexEntry: "For some time after its birth, it grows by gaining nourishment from the seed on its back."
+            },
+            {
+                name: "Charizard", id: "#006",
+                sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png",
+                types: ["Fire", "Flying"],
+                ability: { name: "Blaze", description: "Powers up Fire-type moves when HP is low." },
+                stats: { hp: 78, atk: 84, def: 78, spa: 109, spd: 85, spe: 100 },
+                pokedexEntry: "It spits fire that is hot enough to melt boulders. It may cause forest fires by blowing flames."
+            },
+             {
+                name: "Mudkip", id: "#258",
+                sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/258.png",
+                types: ["Water", null],
+                ability: { name: "Torrent", description: "Powers up Water-type moves when HP is low." },
+                stats: { hp: 50, atk: 70, def: 50, spa: 50, spd: 50, spe: 40 },
+                pokedexEntry: "The fin on its head acts as highly sensitive radar. Using this fin to sense movements of water and air, this Pokémon can determine what is taking place around it without using its eyes."
+            }
+        ];
+        let currentPokemonIndex = 0;
+
+        function populateTypeSelects() {
+            pokemonTypes.forEach(type => {
+                const option1 = document.createElement('option');
+                option1.value = type;
+                option1.textContent = type;
+                pokemonType1Select.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = type;
+                option2.textContent = type;
+                pokemonType2Select.appendChild(option2);
+            });
+        }
+
+        function updatePokemonDisplay(pokemon) {
+            pokemonImage.src = pokemon.sprite;
+            pokemonImage.alt = pokemon.name;
+            pokemonNameInput.value = pokemon.name;
+            pokedexNumberInput.value = pokemon.id;
+
+            pokemonType1Select.value = pokemon.types[0] || "None";
+            pokemonType2Select.value = pokemon.types[1] || "None";
+            updateTypeBadges();
+
+
+            pokemonAbilityNameInput.value = pokemon.ability.name;
+            pokemonAbilityDescInput.value = pokemon.ability.description;
+            pokedexEntryInput.value = pokemon.pokedexEntry || ""; // Populate Pokedex entry
+
+            let currentTotalBST = 0;
+            for (const [statKey, sliderElement] of Object.entries(statSliders)) {
+                const statValue = pokemon.stats[statKey];
+                sliderElement.value = statValue;
+                statValues[statKey].textContent = statValue;
+                statBars[statKey].style.width = `${(statValue / MAX_STAT_VALUE) * 100}%`;
+                currentTotalBST += parseInt(statValue);
+            }
+            totalBSTInput.value = currentTotalBST;
+            generateShowdownExport();
+        }
+
+        function updateTypeBadges() {
+            const type1 = pokemonType1Select.value;
+            const type2 = pokemonType2Select.value;
+
+            pokemonType1Badge.textContent = type1;
+            pokemonType1Badge.className = `type-badge ${typeClasses[type1] || 'type-none'}`;
+            pokemonType1Badge.classList.toggle('hidden', type1 === "None");
+
+
+            pokemonType2Badge.textContent = type2;
+            pokemonType2Badge.className = `type-badge ${typeClasses[type2] || 'type-none'}`;
+            // Hide second badge if it's "None" OR if it's the same as the first type (and not "None")
+            pokemonType2Badge.classList.toggle('hidden', type2 === "None" || (type1 === type2 && type1 !== "None"));
+
+
+            generateShowdownExport();
+        }
+
+
+        // Event Listeners for sliders
+        for (const [statKey, sliderElement] of Object.entries(statSliders)) {
+            sliderElement.addEventListener('input', (event) => {
+                const newValue = event.target.value;
+                statValues[statKey].textContent = newValue;
+                statBars[statKey].style.width = `${(newValue / MAX_STAT_VALUE) * 100}%`;
+                updateTotalBST();
+                generateShowdownExport();
+            });
+        }
+
+        function updateTotalBST() {
+            let currentTotalBST = 0;
+            for (const sliderElement of Object.values(statSliders)) {
+                currentTotalBST += parseInt(sliderElement.value);
+            }
+            totalBSTInput.value = currentTotalBST;
+        }
+
+        totalBSTInput.addEventListener('change', () => {
+            console.log("Total BST changed to: ", totalBSTInput.value);
+            generateShowdownExport();
+        });
+
+
+        // Image Upload Preview
+        pokemonImageUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    pokemonImage.src = e.target.result;
+                    generateShowdownExport();
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Update on input changes
+        [pokemonNameInput, pokedexNumberInput, pokemonAbilityNameInput, pokemonAbilityDescInput, pokedexEntryInput].forEach(input => {
+            input.addEventListener('input', generateShowdownExport);
+        });
+        pokemonType1Select.addEventListener('change', updateTypeBadges);
+        pokemonType2Select.addEventListener('change', updateTypeBadges);
+
+
+        // Generate Button
+        if (generateButton) {
+            generateButton.addEventListener('click', () => {
+                currentPokemonIndex = (currentPokemonIndex + 1) % samplePokemon.length;
+                updatePokemonDisplay(samplePokemon[currentPokemonIndex]);
+            });
+        }
+
+        // Showdown Export Generation (Simplified)
+        function generateShowdownExport() {
+            const name = pokemonNameInput.value || "Unnamed";
+            const abilityName = pokemonAbilityNameInput.value || "No Ability";
+            // const pokedexEntry = pokedexEntryInput.value; // Available if needed for export
+
+            let exportString = `${name} (M) @ Item\n`;
+            exportString += `Ability: ${abilityName}\n`;
+            exportString += `EVs: ...\n`;
+            exportString += `Nature ...\n`;
+            exportString += `- Move 1\n- Move 2\n- Move 3\n- Move 4\n`;
+
+            exportString += `\nStats (for reference):\n`;
+            exportString += `HP: ${statSliders.hp.value}\n`;
+            exportString += `Atk: ${statSliders.atk.value}\n`;
+            exportString += `Def: ${statSliders.def.value}\n`;
+            exportString += `SpA: ${statSliders.spa.value}\n`;
+            exportString += `SpD: ${statSliders.spd.value}\n`;
+            exportString += `Spe: ${statSliders.spe.value}\n`;
+
+            // Optionally include Pokedex entry in a comment or separate section
+            // if (pokedexEntry) {
+            // exportString += `\n--- Pokedex Entry ---\n${pokedexEntry}\n`;
+            // }
+
+            showdownExportText.value = exportString;
+        }
+
+
+        // Copy Button
+        if (copyButton && showdownExportText) {
+            copyButton.addEventListener('click', () => {
+                showdownExportText.select();
+                showdownExportText.setSelectionRange(0, 99999);
+                try {
+                    navigator.clipboard.writeText(showdownExportText.value)
+                        .then(() => showCopyNotification())
+                        .catch(legacyCopy);
+                } catch (err) { legacyCopy(); }
+            });
+        }
+
+        function legacyCopy() {
+            try {
+                document.execCommand('copy');
+                showCopyNotification();
+            } catch (e) {
+                alert("Failed to copy. Please copy manually.");
+            }
+        }
+
+        function showCopyNotification() {
+            copyNotification.classList.add('show');
+            setTimeout(() => { copyNotification.classList.remove('show'); }, 1500);
+        }
+
+        // Initial Setup
+        populateTypeSelects();
+        updatePokemonDisplay(samplePokemon[0]); // Load initial Pokémon data
+
+    </script>
+</body>
+</html>
+
